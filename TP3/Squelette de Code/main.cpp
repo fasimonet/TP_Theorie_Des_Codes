@@ -38,6 +38,10 @@ vector<bitset<N> > readFile(string filename)
 		while(!reader.eof())
 		{
 			reader.read(&buffer, 1);
+			if (buffer == 0) {
+				continue;
+			}
+
 			bitset<N> bsBufferLSB(buffer);
 			bitset<N> bsBufferMSB(buffer>>4);
 			
@@ -49,6 +53,8 @@ vector<bitset<N> > readFile(string filename)
 				cout << " |" << bsBufferMSB.to_string();
 				cout << " |" << bsBufferLSB.to_string();
 			}
+
+			buffer = 0;
 		}
 	}
 	
@@ -81,9 +87,9 @@ vector<bitset<HAMMING_7> > HammingEncoding(vector<bitset<N> > bitsetVector)
 		outBuffer[2] = inBuffer[2];
 		outBuffer[3] = inBuffer[3];
 		
-		outBuffer[4] = 0;
-		outBuffer[5] = 0;
-		outBuffer[6] = 0;
+		outBuffer[4] = (inBuffer[0] + inBuffer[1] + inBuffer[3]) % 2;
+		outBuffer[5] = (inBuffer[0] + inBuffer[2] + inBuffer[3]) % 2;
+		outBuffer[6] = (inBuffer[1] + inBuffer[2] + inBuffer[3]) % 2;
 		
 		if(DEBUG_HE)
 			cout << " | " << outBuffer.to_string();
@@ -97,27 +103,82 @@ vector<bitset<HAMMING_7> > HammingEncoding(vector<bitset<N> > bitsetVector)
 	return encodedBitset;
 }
 
+vector<bitset<HAMMING_7> > HammingDecoding(vector<bitset<HAMMING_7> > encodedBitset)
+{
+	vector<bitset<HAMMING_7> > decodedBitset;
+	
+	if(DEBUG_HE)
+		std::cout << "Decoding : \t";
+		
+	for(vector<bitset<HAMMING_7> >::iterator i = encodedBitset.begin(); i != encodedBitset.end();++i)
+	{
+		// Code to modify (sample)		
+		bitset<HAMMING_7> inBuffer = *i;
+		bitset<HAMMING_7> outBuffer;
+
+		outBuffer[0] = inBuffer[0];
+		outBuffer[1] = inBuffer[1];
+		outBuffer[2] = inBuffer[2];
+		outBuffer[3] = inBuffer[3];
+		
+		outBuffer[4] = (inBuffer[0] + inBuffer[1] + inBuffer[3]) % 2;
+		outBuffer[5] = (inBuffer[0] + inBuffer[2] + inBuffer[3]) % 2;
+		outBuffer[6] = (inBuffer[1] + inBuffer[2] + inBuffer[3]) % 2;
+
+		bool k1Error = outBuffer[4] != inBuffer[4];
+		bool k2Error = outBuffer[5] != inBuffer[5];
+		bool k3Error = outBuffer[6] != inBuffer[6];
+		
+		if (k1Error && k2Error && !k3Error) {
+			cout << "Error bit 1" << endl;
+			outBuffer[0] = !outBuffer[0];
+		}
+		else if (k1Error && !k2Error && k3Error) {
+			cout << "Error bit 2" << endl;
+			outBuffer[1] = !outBuffer[1];
+		}
+		else if (!k1Error && k2Error && k3Error) {
+			cout << "Error bit 3" << endl;
+			outBuffer[2] = !outBuffer[2];
+		}
+		else if (k1Error && k2Error && k3Error) {
+			cout << "Error bit 4" << endl;
+			outBuffer[3] = !outBuffer[3];
+		}
+
+		if(DEBUG_HE)
+			cout << " | " << outBuffer.to_string();
+		
+		decodedBitset.push_back(outBuffer);
+	}
+	
+	if(DEBUG_HE)
+		cout << endl;
+	
+	return decodedBitset;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                     Main                                                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main()
 {
- vector< bitset<N> > input_data;
- vector< bitset<HAMMING_7> > encode_data; 
+	vector< bitset<N> > input_data;
+	vector< bitset<HAMMING_7> > encode_data; 
+	vector< bitset<HAMMING_7> > decode_data;
 
- // Read data to encode
- input_data = readFile("test.txt");
+	// Read data to encode
+	input_data = readFile("small.txt");
+	
+	// Encode by Hamming (7,4) coding
+ 	encode_data = HammingEncoding(input_data);
  
- // Encode by Hamming (7,4) coding
- encode_data = HammingEncoding(input_data);
- 
- // Inject error
- // TODO
+ 	// Inject error
+	encode_data.at(0)[0] =  (1 + encode_data.at(0)[0]) % 2;
 
- // Decode
- // TODO
-
+	// Decode
+	decode_data = HammingDecoding(encode_data);
 }
 
 
