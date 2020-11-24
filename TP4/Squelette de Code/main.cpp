@@ -21,6 +21,12 @@ using namespace std;
 //               Generate random bitset                   //
 ////////////////////////////////////////////////////////////
 
+typedef struct Node 
+{
+  bitset<bits> state;
+  Node* suiv;
+}
+
 template<int bits> bitset<bits> randBitset()
 { 
   bitset<bits> r(rand());
@@ -108,9 +114,11 @@ vector< bitset<K> > GSM_decode(vector< bitset<N> > mess_tra)
 {
 
  vector< bitset<K> > mess_dec;
- list< vector >
+ //list< vector >
 
- 
+ Node* node = createTree();
+ browseTree(node);
+
  //TODO: Code here
  
  /////////// TO DELETE AND MODIFY ///////////
