@@ -20,13 +20,13 @@ using namespace std;
 //                                                        //
 //               Generate random bitset                   //
 ////////////////////////////////////////////////////////////
-
+/*
 typedef struct Node 
 {
   bitset<bits> state;
   Node* suiv;
-}
-
+};
+*/
 template<int bits> bitset<bits> randBitset()
 { 
   bitset<bits> r(rand());
@@ -115,10 +115,10 @@ vector< bitset<K> > GSM_decode(vector< bitset<N> > mess_tra)
 
  vector< bitset<K> > mess_dec;
  //list< vector >
-
+/*
  Node* node = createTree();
  browseTree(node);
-
+*/
  //TODO: Code here
  
  /////////// TO DELETE AND MODIFY ///////////
@@ -133,8 +133,28 @@ vector< bitset<K> > GSM_decode(vector< bitset<N> > mess_tra)
 //                             MAIN                             //
 //////////////////////////////////////////////////////////////////
 
+void a() {
+  cout << "S0 S1 | in | C0 C1 | S'0 S'1" << endl;
+  cout << "----------------------------" << endl;
+
+  for (int S1=0; S1 < 2; ++S1) {
+    for (int S0=0; S0 < 2; ++S0) {
+      for (int input=0; input < 2; ++input) {
+        int C0 = (S1 + input) % 2;
+        int C1 = (S0 + C0) % 2;
+        int S_0 = input;
+        int S_1 = S0;
+
+        cout << " " << S0 << "  " << S1 << " |  " << input << " |  " << C0 << "  " << C1 << " |   " << S_0 << "   " << S_1 << endl;
+      }
+    }
+  }
+}
+
 int main()
 {
+  a();
+/*
  int NbMot = 12;
 
  vector< bitset<K> > mess;
@@ -177,5 +197,6 @@ int main()
  for (vector<bitset<K> >::iterator it = mess_dec.begin() ; it != mess_dec.end(); ++it)
     cout << ' ' << *it;
   cout << '\n';
+  */
 }
 
