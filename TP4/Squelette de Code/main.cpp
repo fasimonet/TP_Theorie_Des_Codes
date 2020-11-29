@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <list>
+#include "node.hpp"
 
 const int N=2;
 const int K=1;
@@ -20,13 +21,8 @@ using namespace std;
 //                                                        //
 //               Generate random bitset                   //
 ////////////////////////////////////////////////////////////
-/*
-typedef struct Node 
-{
-  bitset<bits> state;
-  Node* suiv;
-};
-*/
+
+
 template<int bits> bitset<bits> randBitset()
 { 
   bitset<bits> r(rand());
@@ -120,11 +116,9 @@ vector< bitset<K> > GSM_decode(vector< bitset<N> > mess_tra)
  browseTree(node);
 */
  //TODO: Code here
- 
- /////////// TO DELETE AND MODIFY ///////////
- for(unsigned int i=0;i<mess_tra.size();++i)
-   mess_dec.push_back(randBitset<K>());
- ////////////////////////////////////////////
+//  for(unsigned int i=0;i<mess_tra.size();++i) {
+   
+//  }
 
  return mess_dec;
 }
@@ -149,6 +143,34 @@ void a() {
       }
     }
   }
+
+
+  int message[5][2];
+  message[0][0] = 0;
+  message[0][1] = 0;
+  message[1][0] = 0;
+  message[1][1] = 1;
+  message[2][0] = 0;
+  message[2][1] = 1;
+  message[3][0] = 1;
+  message[3][1] = 0;
+  message[4][0] = 1;
+  message[4][1] = 0;
+
+  Node * graph = new Node();
+
+  std::cout << "Messages : ";
+  for (int i = 0; i < 1; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      std::cout << message[i][j];
+    }
+    std::cout << " ";
+    graph->createNextStep();
+  }
+  std::cout << std::endl;
+  graph->end();
+
+  graph->toString();
 }
 
 int main()
