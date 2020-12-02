@@ -1,27 +1,24 @@
-#ifndef NODE_HPP
-#define NODE_HPP
+#pragma once
 
-#include <cstddef>
+#include <bitset>
 
-class Node {
-    public:
-        int depth;
-        int state[2];
-        int min_hamming_distance;
-        Node * prec;
+#include "const.hpp"
 
-        int C0_0;
-        int C1_0;
-        Node * suiv_0;
+using namespace std;
 
-        int C0_1;
-        int C1_1;
-        Node * suiv_1;
+class Node
+{
+public:
+    static bitset<R + 1> G0;
+    static bitset<R + 1> G1;
 
-        Node();
-        Node(int, int[2], int, Node *);
-        void createNextStep();
-        void toString();
+    bitset<R> regis;
+
+    bitset<N> out0;
+    bitset<N> out1;
+
+    int stateout0;
+    int stateout1;
+
+    Node(int);
 };
-
-#endif // NODE_HPP

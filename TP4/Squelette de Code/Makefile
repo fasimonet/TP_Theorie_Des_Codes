@@ -8,7 +8,7 @@
 EXEC=tp4
 
 #Liste des fichiers sources separes par des espaces
-SOURCES=main.cpp node.cpp
+SOURCES=main.cpp node.cpp link.cpp
 
 #Liste des fichiers objets
 OBJETS=$(SOURCES:%.cpp=%.o)
