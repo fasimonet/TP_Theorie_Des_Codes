@@ -1,0 +1,12 @@
+Compte-rendu TP4 de Théorie des codes
+=====================================
+
+Par Flavio RANCHON et Fabien SIMONET
+
+1. Réalisez une fonction permettant le décodage du code convolutionnel par l'algorithme de Viterbi.
+
+Il s'agit de la fonction decode_GSM() (dans main.cpp). L'objectif est de construire un arbre en choisissant des pondérations en fonction de la distance de Hamming. On décode ensuite le message en utilisant le chemin avec les pondérations les plus basses (avec le moins d'erreurs et celle avec lesquelles on peut retrouver le bon message en cas d'erreur).
+
+2. Réalisez une fonction permettant de simuler le canal de transmission en rajoutant aléatoirement des erreurs.
+
+Les erreurs sont injectées dans la fonction GSM_transmission() au moment de la transmission du message (dans main.cpp).
