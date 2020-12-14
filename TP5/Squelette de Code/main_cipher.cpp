@@ -22,6 +22,8 @@ public:
   string encrypt(string text)
   {
     string out;
+    char tmp;
+    int decalage;
 
     // Modifying all characters other than uppercase : lowercase -> uppercase, other -> delete
     for(unsigned int i = 0; i < text.length(); ++i)
@@ -32,19 +34,37 @@ public:
         out += text[i] + 'A' - 'a';
     }
 
-    // ADD THE VIGENERE CRYPTION 	
- 
+    for(unsigned int i = 0; i < out.length(); ++i)
+    {
+      decalage = key[i % key.length()] - 'A';
+
+      tmp = (out[i] - 'A' + decalage) % 26;
+
+      out[i] = tmp + 'A';
+    }
+
     return out;
   }
  
   string decrypt(string text)
   {
     string out;
+    char tmp;
+    int decalage;
 
-    // TO REMOVE
-    out = text;
+    for(unsigned int i = 0; i < text.length(); ++i)
+    {
+      decalage = key[i % key.length()] - 'A';
+      tmp = text[i] - 'A';
 
-    // ADD THE VIGENERE DECRYPTION 
+      tmp = (tmp - decalage);
+      if ( tmp < 0 ) {
+        tmp += 26;
+      }
+
+      out += tmp + 'A';
+    }
+
     return out;
   }
 };
