@@ -1,124 +1,351 @@
 //
 //  TP6_RSA
-//  
+//
 
 #include <stdio.h>
 #include <iostream>
 #include <gmp.h>
+#include <cmath>
+#include <cstdarg>
 
-#define BITSTRENGTH  14              /* size of modulus (n) in bits */
-#define PRIMESIZE (BITSTRENGTH / 2)  /* size of the primes p and q  */
+#define BITSTRENGTH 14              /* size of modulus (n) in bits */
+#define PRIMESIZE (BITSTRENGTH / 2) /* size of the primes p and q  */
 
 /* Declare global variables */
+mpz_t d, e, n, M, c;
 
-mpz_t d,e,n;
-mpz_t M,c;
 
-/* Main subroutine */
-int main()
+//////////////////////////////////////////////
+//             Add mpz functions            //
+//////////////////////////////////////////////
+
+void inits(int count...)
 {
-    /* Initialize the GMP integers */
-    mpz_init(d);
-    mpz_init(e);
-    mpz_init(n);
-    
-    mpz_init(M);
-    mpz_init(c);
-    
- 
-    /* This function creates the keys. The basic algorithm is...
-     *
-     *  1. Generate two large distinct primes p and q randomly
-     *  2. Calculate n = pq and x = (p-1)(q-1)
-     *  3. Select a random integer e (1<e<x) such that gcd(e,x) = 1
-     *  4. Calculate the unique d such that ed = 1(mod x)
-     *  5. Public key pair : (e,n), Private key pair : (d,n)
-     *
-     */
-    
-    /*
-     *  Step 1 : Get two large primes.
-     */
-    mpz_t p,q;
-    mpz_init(p);
-    mpz_init(q);
-    
-    mpz_init_set_str(p, "47", 0);
-    mpz_init_set_str(q, "71", 0);
-    char p_str[1000];
-    char q_str[1000];
-    mpz_get_str(p_str,10,p);
-    mpz_get_str(q_str,10,q);
-    
-    std::cout << "Random Prime 'p' = " << p_str <<  std::endl;
-    std::cout << "Random Prime 'q' = " << q_str <<  std::endl;
-    
-    /*
-     *  Step 2 : Calculate n (=pq) ie the 1024 bit modulus
-     *  and x (=(p-1)(q-1)).
-     */
-    char n_str[1000];
-    mpz_t x;
-    mpz_init(x);
+    va_list args;
+    va_start(args, count);
 
-    /* Calculate n... */
-    mpz_mul(n,p,q);
-    mpz_get_str(n_str,10,n);
-    std::cout << "\t n = " << n_str << std::endl;
-    
-    
-    /* Calculate x... */
-    mpz_t p_minus_1,q_minus_1;
-    mpz_init(p_minus_1);
-    mpz_init(q_minus_1);
+    for (int i = 0; i < count; ++i)
+        mpz_init( *(va_arg(args, mpz_t*)) );
 
-    mpz_sub_ui(p_minus_1,p,(unsigned long int)1);
-    mpz_sub_ui(q_minus_1,q,(unsigned long int)1);
-
-    mpz_mul(x,p_minus_1,q_minus_1);
-    char phi_str[1000];
-    mpz_get_str(phi_str,10,x);
-    std::cout << "\t phi(n) = " << phi_str << std::endl;
-
-    /*
-     *  Step 3 : Get small odd integer e such that gcd(e,x) = 1.
-     */
-    mpz_init_set_str(e, "79", 0);
-    char e_str[1000];
-    mpz_get_str(e_str,10,e);
-    std::cout << "\t e = " << e_str << std::endl;
-
-    /*
-     *  Step 4 : Calculate unique d such that ed = 1(mod x)
-     */
-    mpz_init_set_str(d, "1019", 0);
-    char d_str[1000];
-    mpz_get_str(d_str,10,d);
-    std::cout << "\t d = " << d_str << std::endl << std::endl;
-
-    /*
-     *  Step 5 : Print the public and private key pairs...
-     */
-    std::cout << "Public Keys  (e,n): ( " << e_str <<" , " << n_str << " )" << std::endl;
-    std::cout << "Private Keys (d,n): ( " << d_str <<" , " << n_str << " )" << std::endl;
-    /*
-     *  Encrypt
-     */
-
-    //TODO
-    
-    /* Clean up the GMP integers */
-    mpz_clear(p_minus_1);
-    mpz_clear(q_minus_1);
-    mpz_clear(x);
-    mpz_clear(p);
-    mpz_clear(q);
-    
-    mpz_clear(d);
-    mpz_clear(e);
-    mpz_clear(n);
-    
-    mpz_clear(M);
-    mpz_clear(c);
+    va_end(args);
 }
 
+void clears(int count...)
+{
+    va_list args;
+    va_start(args, count);
+
+    for (int i = 0; i < count; ++i)
+        mpz_clear( *(va_arg(args, mpz_t*)) );
+
+    va_end(args);
+}
+
+std::string mpz_str(const mpz_t other)
+{
+    char str[1000];
+
+    mpz_get_str(str, 10, other);
+
+    return str;
+}
+
+
+//////////////////////////////////////////////
+//          Redefine mpz functions          //
+//////////////////////////////////////////////
+
+void exponentiation_by_squaring(mpz_t &m, const mpz_t &g, const mpz_t &k, const mpz_t &p)
+{
+    mpz_t g_tmp, k_tmp, p_tmp;
+    inits(3, &g_tmp, &k_tmp, &p_tmp);
+    mpz_set(g_tmp, g);
+    mpz_set(k_tmp, k);
+    mpz_set(p_tmp, p);
+
+    if (mpz_cmp_si(k_tmp, 0) < 0) // si k < 0
+    {
+        mpz_t one;
+        inits(1, &one);
+        mpz_set_ui(one, 1);
+
+        mpz_fdiv_q(g_tmp, one, g_tmp); // g = 1 / g
+        mpz_mul_si(k_tmp, k_tmp, -1);  // k = k * (-1)
+        mpz_clear(one);
+    }
+
+    if (mpz_cmp_si(k_tmp, 0) == 0)
+    {
+        mpz_set_ui(m, 1);
+        return;
+    }
+
+    mpz_t y;
+    inits(1, &y);
+    mpz_set_ui(y, 1);
+
+    while (mpz_cmp_si(k_tmp, 1) > 0) // while k > 1
+    {
+        if (mpz_even_p(k_tmp) != 0) // if k is even
+        {
+            mpz_mul(g_tmp, g_tmp, g_tmp);   // g = g * g
+            mpz_mod(g_tmp, g_tmp, p_tmp);   // g = g mod p
+            mpz_fdiv_q_ui(k_tmp, k_tmp, 2); // k = k / 2
+        }
+        else
+        {
+            mpz_mul(y, g_tmp, y);         // y = g * y
+            mpz_mul(g_tmp, g_tmp, g_tmp); // g = g * g
+
+            // k = (k-1) / 2
+            mpz_sub_ui(k_tmp, k_tmp, 1);
+            mpz_fdiv_q_ui(k_tmp, k_tmp, 2);
+        }
+    }
+
+    mpz_mul(m, g_tmp, y); // m = g * y
+    mpz_mod(m, m, p_tmp); // m = m [p]
+}
+
+void rabin_miller_step_1_dif(mpz_t &s, mpz_t &t, const mpz_t &n)
+{
+    mpz_t local_n;
+
+    inits(1, &local_n);
+
+    mpz_set(t, n);
+    mpz_sub_ui(t, t, 1);
+    mpz_set_ui(s, 0);
+
+    while (mpz_even_p(t))
+    {
+        mpz_fdiv_q_ui(t, t, 2);
+        mpz_add_ui(s, s, 1);
+    }
+}
+
+bool rabin_miller(int k, const mpz_t &n)
+{
+    // Declare variables
+    gmp_randstate_t state;
+    mpz_t t, s, a, x, r, tmp_oprd, seed;
+
+    // Init variables
+    inits(6, &t, &s, &a, &x, &r, &tmp_oprd);
+
+    rabin_miller_step_1_dif(s, t, n);
+    if (mpz_get_si(n) <= 2 && mpz_odd_p(n))
+        return false;
+
+    // Init state
+    mpz_init_set_str(seed, std::to_string(1000 + rand() % 100000).c_str(), 0);
+    gmp_randinit_default(state);
+    gmp_randseed(state, seed);
+
+    for (int i = 0; i < k; ++i)
+    {
+        mpz_sub_ui(tmp_oprd, n, 2);
+        mpz_urandomm(tmp_oprd, state, tmp_oprd);
+        mpz_add_ui(a, tmp_oprd, 2);
+        mpz_powm(x, a, t, n);
+        mpz_sub_ui(tmp_oprd, n, 1);
+
+        if (mpz_cmp_ui(x, 1) == 0 || mpz_cmp(x, tmp_oprd) == 0)
+            goto loop;
+
+        for (mpz_set_ui(r, 1); mpz_cmp(r, s) < 0; mpz_add_ui(r, r, 1))
+        {
+            // x = (x * x) % n;
+            mpz_mul(x, x, x);
+            mpz_mod(x, x, n);
+
+            if (mpz_cmp_ui(x, 1) == 0)
+                return false;
+
+            mpz_sub_ui(tmp_oprd, n, 1);
+            
+            if (mpz_cmp(x, tmp_oprd) == 0)
+                goto loop;
+        }
+        return false;
+
+    loop:
+        continue;
+    }
+
+    return true;
+}
+
+void nextprime(mpz_t &rop)
+{
+    mpz_t tmp;
+    mpz_set(tmp, rop);
+
+    if (mpz_even_p(rop) != 0) // If op is even
+        mpz_add_ui(tmp, rop, 1);
+    
+    while (rabin_miller(100000, tmp) != true)
+        mpz_add_ui(tmp, tmp, 2);
+
+    mpz_set(rop, tmp);
+}
+
+
+//////////////////////////////////////////////
+//               RSA functions              //
+//////////////////////////////////////////////
+
+/*
+ *  Generate two large distinct primes p and q randomly
+ */
+void generatePrimes(mpz_t &p, mpz_t &q, mpz_t &seed, gmp_randstate_t &state) {
+    mpz_init_set_str(seed, std::to_string(1000 + rand() % 100000).c_str(), 0);
+
+    gmp_randinit_default(state);
+    gmp_randseed(state, seed);
+
+    mpz_urandomm(p, state, seed);
+    mpz_urandomm(q, state, seed);
+
+    nextprime(p);
+    nextprime(q);
+}
+
+/*
+ *  Calculate n = pq and x = (p-1)(q-1)
+ */
+void calculateNX(mpz_t &n, mpz_t &x, mpz_t &p, mpz_t &q) {
+    mpz_t p_minus_1, q_minus_1;
+    inits(2, &p_minus_1, &q_minus_1);
+
+    // Calculate n
+    mpz_mul(n, p, q);
+    std::cout << "    n  = " << mpz_str(n) << std::endl;
+
+    // Calculate x
+    mpz_sub_ui(p_minus_1, p, (unsigned long int)1);
+    mpz_sub_ui(q_minus_1, q, (unsigned long int)1);
+
+    mpz_mul(x, p_minus_1, q_minus_1);
+    std::cout << "phi(n) = " << mpz_str(x) << std::endl;
+
+    clears(2, &p_minus_1, &q_minus_1);
+}
+
+/*
+ *  Select a random integer e (1<e<x) such that gcd(e,x) = 1
+ */
+void calculateE(mpz_t &e, mpz_t &x, mpz_t &seed, gmp_randstate_t &state) {
+    mpz_t e_tmp, pgcd;
+    inits(2, &e_tmp, &pgcd);
+
+    do
+    {
+        mpz_init_set_str(seed, std::to_string(rand()).c_str(), 0);
+
+        gmp_randinit_default(state);
+        gmp_randseed(state, seed);
+
+        mpz_urandomm(e_tmp, state, seed);
+        mpz_init_set_str(e, std::to_string(mpz_get_ui(e_tmp) % mpz_get_ui(x)).c_str(), 0);
+
+        mpz_gcd(pgcd, e, x);
+    } while (mpz_get_ui(pgcd) != 1);
+    
+    std::cout << "    e  = " << mpz_str(e) << std::endl;
+
+    clears(2, &e_tmp, &pgcd);
+}
+
+/*
+ *  Calculate the unique d such that ed = 1(mod x)
+ */
+void calculateUniqueD(mpz_t &d, mpz_t &e, mpz_t &x) {
+    if (mpz_invert(d, e, x) == 0)
+        std::cout << "Error while inversing e mod x" << std::endl;
+
+    std::cout << "    d  = " << mpz_str(d) << std::endl;
+}
+
+/*
+ *  Print Public key pair : (e,n) and Private key pair : (d,n)
+ */
+void printKeys(mpz_t &e, mpz_t &d, mpz_t &n) {
+    std::cout << "Public  Keys (e,n): ( " << mpz_str(e) << " , " << mpz_str(n) << " )" << std::endl;
+    std::cout << "Private Keys (d,n): ( " << mpz_str(d) << " , " << mpz_str(n) << " )" << std::endl;
+}
+
+void createKeys(mpz_t &e, mpz_t &d, mpz_t &n) {
+    gmp_randstate_t state;
+    mpz_t p, q, seed, x;
+
+    // Initialize the local GMP integers
+    inits(4, &p, &q, &seed, &x);
+
+    // Step 1 : Generate two large distinct primes p and q randomly
+    std::cout << "###################" << std::endl;
+    generatePrimes(p, q, seed, state);
+
+    // Step 2 : Calculate n = pq and x = (p-1)(q-1)
+    calculateNX(n, x, p, q);
+
+    // Step 3 : Select a random integer e (1<e<x) such that gcd(e,x) = 1
+    calculateE(e, x, seed, state);
+
+    // Step 4 : Calculate the unique d such that ed = 1(mod x)
+    calculateUniqueD(d, e, x);
+    std::cout << "###################" << std::endl;
+
+    // Step 5 : Public key pair : (e,n), Private key pair : (d,n)
+    std::cout << std::endl << "###############################################" << std::endl;
+    printKeys(e, d, n);
+    std::cout << "###############################################" << std::endl;
+
+    // Clean up the local GMP integers
+    clears(4, &p, &q, &seed, &x);
+}
+
+void rsa_cipher(mpz_t &k, mpz_t &n, std::string prefix = "") {
+    mpz_t before, after;
+
+    // Initialize the local GMP integers
+    inits(2, &before, &after);
+
+    // Scan message
+    char in[1000];
+    std::cout << std::endl << "################################" << std::endl;
+    std::cout << "Message à " << prefix << "chiffrer   : ";
+    std::cin >> in;
+    mpz_set_str(before, in, 10);
+
+    // Cipher message
+    exponentiation_by_squaring(after, before, k, n);
+
+    // Display message
+    std::cout << "Message " << prefix << "chiffré      : " << mpz_str(after) << std::endl;
+    std::cout << "################################" << std::endl;
+
+    // Clean up the local GMP integers
+    clears(2, &before, &after);
+}
+
+int main()
+{
+    // Initialize the gobal GMP integers
+    inits(5, &d, &e, &n, &M, &c);
+
+    // Initialize random time
+    srand(time(NULL));
+
+    // Create RSA keys
+    createKeys(e, d, n);
+
+    // Encrypt
+    rsa_cipher(e, n);
+
+    // Decrypt
+    rsa_cipher(d, n, "dé");
+
+    // Clean up the gobal GMP integers
+    clears(5, &d, &e, &n, &M, &c);
+}
